@@ -328,3 +328,9 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+
+# Platform io files
+*.pio
+*.travis.yml
+*.vscode
+platformio.ini
