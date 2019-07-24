@@ -10,7 +10,7 @@ The bluepill communicates with the Raspberry Pi via rosserial, and acts like ano
 - Base, shoulder and elbow potentiometers for arm positions (analog)
 - QRD sensor values, for each of the five in our sensor array (analog)
 - Limit switch values for claw and bumper (digital)
-- Encoder values for left and right drive wheels
+- Encoder values for left and right drive wheels (digital)
 - Rosserial communication input (velocity commands)
 
 **Outputs:**
