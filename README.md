@@ -2,7 +2,7 @@
 ## By Team 6, ENPH 253 Robot Competition
 ### Members: Fiona Lang, Gabriel Robinson-Leith, Tyler Keeling, Emma Gray
 
-This is the code we uploaded to our Blue Pill, which acted like the "spinal cord" of our system. 
+This is the code we upload to our Blue Pill, which acts like the "spinal cord" of our system. 
 
 The bluepill communicates with the Raspberry Pi via rosserial, and acts like another ROS node. It's in charge of continuously sending sensor signals (IR array, limit switches, potentiometer values) as well as actuating motors based on command values sent from the Pi.
 
