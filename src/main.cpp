@@ -17,28 +17,30 @@
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
 
-// #define CLAW_L PA6
-// #define CLAW_R PA0
+// Define claw servo output pins
+#define CLAW_L PA6
+#define CLAW_R PA0
 
-// #define SHOULDER THINGS NOW THAT WE'RE USING A LOGIC SETUP THIS CODE NEEDS TO CHANGE
-// Shoulder toggle will be PA4 and shoulder PWM is going to be PA10
+// Define PWM output pins
+#define BASE_PWM PB_9
+#define SHOULDER_PWM PB_8
+#define ELBOW_PWM PA_8
+#define wheelR_PWM PB_7
+#define wheelL_PWM PB_6
 
-// #define ELBOW_F PA_8
-// #define ELBOW_B PA_9
-
-// #define BASE_CW PB_8
-// #define BASE_CCW PB_9
-
-#define wheelControlR PB_7
+// Define toggle pins for PWM output
+#define toggleBase PA12
+#define toggleShoulder PA11
+#define toggleElbow PA15
 #define toggleWheelR PB4
-
-#define wheelControlL PB_6
 #define toggleWheelL PB5
 
-// #define BASE_READ PB1
-// #define SHOULDER_READ PB0
-// #define ELBOW_READ PA7
+// Define arm potentiometer input pins
+#define BASE_POT PB1
+#define SHOULDER_POT PB0
+#define ELBOW_POT PA7
 
+// Define IR array input pins
 #define IR0 PA_1
 #define IR1 PA_2
 #define IR2 PA_3
@@ -47,8 +49,8 @@
 
 #define PWM_MAX_DUTY 500
 
-// Servo claw_l;
-// Servo clar_r;
+Servo claw_l;
+Servo claw_r;
 
 int averageAnalog(int pin){
   int v=0;
@@ -69,25 +71,41 @@ int linearize(int pwmPercent) {
 }
 
 void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
-//   claw_l.write(arm_cmd_msg.l_claw);   
-//   clar_r.write(arm_cmd_msg.r_claw);
 
-//   if (arm_cmd_msg.shoulderVel > 0) {
-
-//       pwm_start(SHOULDER_F, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.shoulderVel), 0);
-//       pwm_start(SHOULDER_B, 100000, PWM_MAX_DUTY, 0, 0);
-//   } else {
-//       pwm_start(SHOULDER_B, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.shoulderVel), 0);
-//       pwm_start(SHOULDER_F, 100000, PWM_MAX_DUTY, 0, 0);
-//   }
+  if (arm_cmd_msg.shoulderVel > 0) {
+      digitalWrite(toggleShoulder, 1);
+      pwm_start(SHOULDER_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.shoulderVel), 0);
+  } else {
+      digitalWrite(toggleShoulder, 0);
+      pwm_start(SHOULDER_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.shoulderVel), 0);
+  }
   
-//   if (arm_cmd_msg.elbowVel > 0) {
-//     pwm_start(ELBOW_F, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
-//     pwm_start(ELBOW_B, 100000, PWM_MAX_DUTY, 0, 0);
-//   } else {
-//     pwm_start(ELBOW_B, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
-//     pwm_start(ELBOW_F, 100000, PWM_MAX_DUTY, 0, 0);
-//   }
+  if (arm_cmd_msg.elbowVel > 0) {
+    digitalWrite(toggleELbow, 1);
+    pwm_start(ELBOW_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
+  } else {
+    digitalWrite(toggleELbow, 0);
+    pwm_start(ELBOW_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
+  }
+
+  if (arm_cmd_msg.shoulderVel > 0) {
+      digitalWrite(toggleShoulder, 1);
+      pwm_start(SHOULDER_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.shoulderVel), 0);
+  } else {
+      digitalWrite(toggleShoulder, 0);
+      pwm_start(SHOULDER_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.shoulderVel), 0);
+  }
+  
+  if (arm_cmd_msg.baseVel > 0) {
+    digitalWrite(toggleBase, 1);
+    pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
+  } else {
+    digitalWrite(toggleBase, 0);
+    pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
+  }
+
+  claw_l.write(arm_cmd_msg.l_claw);
+  claw_r.write(arm_cmd_msg.r_claw);
 
 }
 
@@ -99,18 +117,18 @@ void wheelVel_callback(const hektar::wheelVelocity  &wheel_cmd_msg) {
 
   if (wheel_cmd_msg.wheelL > 0) {
       digitalWrite(toggleWheelL, 1);
-      pwm_start(wheelControlL, 100000, PWM_MAX_DUTY, linearize(wheel_cmd_msg.wheelL), 0);
+      pwm_start(wheelL_PWM, 100000, PWM_MAX_DUTY, linearize(wheel_cmd_msg.wheelL), 0);
   } else {
       digitalWrite(toggleWheelL, 0);
-      pwm_start(wheelControlL, 100000, PWM_MAX_DUTY, linearize(wheel_cmd_msg.wheelL), 0);
+      pwm_start(wheelL_PWM, 100000, PWM_MAX_DUTY, linearize(wheel_cmd_msg.wheelL), 0);
   }
   
   if (wheel_cmd_msg.wheelR > 0) {
       digitalWrite(toggleWheelR, 0);
-      pwm_start(wheelControlR, 100000, PWM_MAX_DUTY, linearize(wheel_cmd_msg.wheelR), 0);
+      pwm_start(wheelR_PWM, 100000, PWM_MAX_DUTY, linearize(wheel_cmd_msg.wheelR), 0);
   } else {
       digitalWrite(toggleWheelR, 1);
-      pwm_start(wheelControlR, 100000, PWM_MAX_DUTY, linearize(wheel_cmd_msg.wheelR), 0);
+      pwm_start(wheelR_PWM, 100000, PWM_MAX_DUTY, linearize(wheel_cmd_msg.wheelR), 0);
   }
 
 }
@@ -119,7 +137,7 @@ ros::NodeHandle nh;
 hektar::armPos armpos_msg;
 
 
-//ros::Publisher armpub("arm_positions", &armpos_msg);
+ros::Publisher armpub("arm_positions", &armpos_msg);
 ros::Publisher irpub("ir_array", &ir_msg);
 
 ros::Subscriber<hektar::armCtrl> armSub("arm_commands", arm_callback);
@@ -129,42 +147,39 @@ ros::Subscriber<hektar::wheelVelocity> wheelSub("wheel_output", wheelVel_callbac
 void setup() {
   //ros stuff
   nh.initNode();
-  //nh.advertise(armpub);
+  nh.advertise(armpub);
   nh.advertise(irpub);
   nh.subscribe(armSub);
   nh.subscribe(wheelSub);
 
   // //setup of pins 
   // claw_l.attach(CLAW_L);
-  // clar_r.attach(CLAW_R);
+  // claw_r.attach(CLAW_R);
 
-  // pinMode(SHOULDER_F, OUTPUT); 
-  // pinMode(SHOULDER_B, OUTPUT); 
-  // pinMode(ELBOW_F, OUTPUT); 
-  // pinMode(ELBOW_B, OUTPUT); 
+  pinMode(SHOULDER_PWM, OUTPUT); 
+  pinMode(ELBOW_PWM, OUTPUT); 
 
   pinMode(IR0, INPUT);
   pinMode(IR1, INPUT);
   pinMode(IR2, INPUT);
   pinMode(IR3, INPUT);
   pinMode(IR4, INPUT);
-
-  // pinMode(BASE_READ, INPUT);
-  // pinMode(ELBOW_READ, INPUT);
-  // pinMode(SHOULDER_READ, INPUT);
+ pinMode(BASE_POT, INPUT);
+  pinMode(ELBOW_POT, INPUT);
+  pinMode(SHOULDER_POT, INPUT);
 
   pinMode(toggleWheelL, OUTPUT);
   pinMode(toggleWheelR, OUTPUT);
-  pinMode(wheelControlL, OUTPUT);
-  pinMode(wheelControlR, OUTPUT);
+  pinMode(toggleBase, OUTPUT);
+  pinMode(toggleShoulder, OUTPUT);
+  pinMode(toggleElbow, OUTPUT);
 
-  pwm_start(wheelControlL, 100000, PWM_MAX_DUTY, 0, 1);
-  pwm_start(wheelControlR, 100000, PWM_MAX_DUTY, 0, 1);
+  pwm_start(wheelL_PWM, 100000, PWM_MAX_DUTY, 0, 1);
+  pwm_start(wheelR_PWM, 100000, PWM_MAX_DUTY, 0, 1);
 
-  // pwm_start(SHOULDER_F, 100000, PWM_MAX_DUTY, 0, 1);
-  // pwm_start(SHOULDER_B, 100000, PWM_MAX_DUTY, 0, 1);
-  // pwm_start(ELBOW_F, 100000, PWM_MAX_DUTY, 0, 1);
-  // pwm_start(ELBOW_B, 100000, PWM_MAX_DUTY, 0, 1);
+  pwm_start(SHOULDER_PWM, 100000, PWM_MAX_DUTY, 0, 1);
+  pwm_start(ELBOW_PWM, 100000, PWM_MAX_DUTY, 0, 1);
+  pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, 0, 1);
 
 }
 
@@ -180,13 +195,16 @@ void loop() {
 
   // ARM Publication: 
   //reading data to publish
-  // armpos_msg.basePos = analogRead(BASE_READ);
-  // armpos_msg.shoulderPos = analogRead(SHOULDER_READ);
-  // armpos_msg.elbowPos = analogRead(ELBOW_READ);
+  armpos_msg.basePos = analogRead(BASE_POT);
+  armpos_msg.shoulderPos = analogRead(SHOULDER_POT);
+  armpos_msg.elbowPos = analogRead(ELBOW_POT);
+
   //ros stuff
   irpub.publish(&ir_msg);
+  armpub.publish(&armpos_msg);
 
   nh.spinOnce();
+
   delay(20);
 }
 
