@@ -9,6 +9,7 @@
 #include <Servo.h>
 
 #include <ros.h>
+#include <hektar/Claw.h>
 #include <hektar/armCtrl.h>
 #include <hektar/wheelVelocity.h>
 #include <hektar/IRarray.h>
@@ -68,14 +69,14 @@ int linearize(int pwmPercent) {
 }
 
 float get_servo_pulse(int angle){
-  return (angle/180.0 + 1);
+  return ((49 * angle)/180.0 + 1);
 }
 
 // Theoretically, 1ms pulse moves it to 0 degree state, 2ms pulse moves it to 180 degree state,
 // and everything in between is linear.
 void claw_callback(const hektar::Claw &claw_cmd_msg) {
-  int leftPulse = 10 * get_servo_pulse(claw_cmd_msg.posL);
-  int rightPulse = 10 * get_servo_pulse(claw_cmd_msg.posR)
+  int leftPulse = 50 - get_servo_pulse(claw_cmd_msg.posL);
+  int rightPulse = get_servo_pulse(claw_cmd_msg.posR)
   pwm_start(CLAW_L, 10000, 200, leftPulse, 0);
   pwm_start(CLAW_R, 10000, 200, rightPulse, 0);
 }
