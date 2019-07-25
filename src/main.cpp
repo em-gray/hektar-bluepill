@@ -9,9 +9,9 @@
 #include <Servo.h>
 
 #include <ros.h>
-#include <hektar/armCtrl.h>
-#include <hektar/wheelVelocity.h>
-#include <hektar/IRarray.h>
+#include <armCtrl.h>
+#include <wheelVelocity.h>
+#include <IRarray.h>
 #include <hektar/armPos.h>
 #include <rosserial_arduino/Adc.h>
 #include <std_msgs/Float64.h>
@@ -49,9 +49,6 @@
 
 #define PWM_MAX_DUTY 500
 
-Servo claw_l;
-Servo claw_r;
-
 int averageAnalog(int pin){
   int v=0;
   for(int i=0; i<4; i++) v+= analogRead(pin);
@@ -68,6 +65,19 @@ int linearize(int pwmPercent) {
   } else {
     return -pwmPercent*PWM_MAX_DUTY/127;
   }
+}
+
+float get_servo_pulse(int angle){
+  return (angle/180.0 + 1);
+}
+
+// Theoretically, 1ms pulse moves it to 0 degree state, 2ms pulse moves it to 180 degree state,
+// and everything in between is linear
+void claw_callback(const hektar::Claw &claw_cmd_msg) {
+  int leftPulse = 10 * get_servo_pulse(claw_cmd_msg.posL);
+  int rightPulse = 10 * get_servo_pulse(claw_cmd_msg.posR)
+  pwm_start(CLAW_L, 10000, 200, leftPulse, 0);
+  pwm_start(CLAW_R, 10000, 200, rightPulse, 0);
 }
 
 void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
@@ -104,9 +114,6 @@ void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
     pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
   }
 
-  claw_l.write(arm_cmd_msg.l_claw);
-  claw_r.write(arm_cmd_msg.r_claw);
-
 }
 
 hektar::IRarray ir_msg; 
@@ -142,6 +149,7 @@ ros::Publisher irpub("ir_array", &ir_msg);
 
 ros::Subscriber<hektar::armCtrl> armSub("arm_commands", arm_callback);
 ros::Subscriber<hektar::wheelVelocity> wheelSub("wheel_output", wheelVel_callback);
+ros::Subscriber<hektar::Claw> clawSub("grabber", claw_callback);
 
 
 void setup() {
@@ -153,8 +161,8 @@ void setup() {
   nh.subscribe(wheelSub);
 
   // //setup of pins 
-  // claw_l.attach(CLAW_L);
-  // claw_r.attach(CLAW_R);
+  pinMode(CLAW_L, OUTPUT);
+  pinMode(CLAW_R, OUTPUT);
 
   pinMode(SHOULDER_PWM, OUTPUT); 
   pinMode(ELBOW_PWM, OUTPUT); 
@@ -164,7 +172,7 @@ void setup() {
   pinMode(IR2, INPUT);
   pinMode(IR3, INPUT);
   pinMode(IR4, INPUT);
- pinMode(BASE_POT, INPUT);
+  pinMode(BASE_POT, INPUT);
   pinMode(ELBOW_POT, INPUT);
   pinMode(SHOULDER_POT, INPUT);
 
@@ -180,6 +188,10 @@ void setup() {
   pwm_start(SHOULDER_PWM, 100000, PWM_MAX_DUTY, 0, 1);
   pwm_start(ELBOW_PWM, 100000, PWM_MAX_DUTY, 0, 1);
   pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, 0, 1);
+
+  // Values courtesy of Mo
+  pwm_start(CLAW_L, 10000, 200, 0, 1);
+  pwm_start(CLAW_R, 10000, 200, 0, 1);
 
 }
 
