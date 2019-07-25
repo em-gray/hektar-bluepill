@@ -18,8 +18,8 @@
 #include <std_msgs/Bool.h>
 
 // Define claw servo output pins
-#define CLAW_L PA6
-#define CLAW_R PA0
+#define CLAW_L PA_6
+#define CLAW_R PA_0
 
 // Define PWM output pins
 #define BASE_PWM PB_9
@@ -73,12 +73,12 @@ float get_servo_pulse(int angle){
 
 // Theoretically, 1ms pulse moves it to 0 degree state, 2ms pulse moves it to 180 degree state,
 // and everything in between is linear.
-void claw_callback(const hektar::Claw &claw_cmd_msg) {
-  int leftPulse = 10 * get_servo_pulse(claw_cmd_msg.posL);
-  int rightPulse = 10 * get_servo_pulse(claw_cmd_msg.posR)
-  pwm_start(CLAW_L, 10000, 200, leftPulse, 0);
-  pwm_start(CLAW_R, 10000, 200, rightPulse, 0);
-}
+// void claw_callback(const hektar::Claw &claw_cmd_msg) {
+//   int leftPulse = 10 * get_servo_pulse(claw_cmd_msg.posL);
+//   int rightPulse = 10 * get_servo_pulse(claw_cmd_msg.posR);
+//   pwm_start(CLAW_L, 10000, 200, leftPulse, 0);
+//   pwm_start(CLAW_R, 10000, 200, rightPulse, 0);
+// }
 
 void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
 
@@ -91,10 +91,10 @@ void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
   }
   
   if (arm_cmd_msg.elbowVel > 0) {
-    digitalWrite(toggleELbow, 1);
+    digitalWrite(toggleElbow, 1);
     pwm_start(ELBOW_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
   } else {
-    digitalWrite(toggleELbow, 0);
+    digitalWrite(toggleElbow, 0);
     pwm_start(ELBOW_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
   }
 
@@ -149,7 +149,7 @@ ros::Publisher irpub("ir_array", &ir_msg);
 
 ros::Subscriber<hektar::armCtrl> armSub("arm_commands", arm_callback);
 ros::Subscriber<hektar::wheelVelocity> wheelSub("wheel_output", wheelVel_callback);
-ros::Subscriber<hektar::Claw> clawSub("grabber", claw_callback);
+// ros::Subscriber<hektar::Claw> clawSub("grabber", claw_callback);
 
 
 void setup() {
@@ -223,6 +223,8 @@ void loop() {
 /********** ADC STUFF **********/
   //rosserial_arduino::Adc adc_msg;
   //ros::Publisher p("adc", &adc_msg);
+
+
 
   // adc_msg.adc0 = averageAnalog(PA0);
   // adc_msg.adc1 = averageAnalog(PA1);
