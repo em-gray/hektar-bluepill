@@ -9,9 +9,9 @@
 #include <Servo.h>
 
 #include <ros.h>
-#include <armCtrl.h>
-#include <wheelVelocity.h>
-#include <IRarray.h>
+#include <hektar/armCtrl.h>
+#include <hektar/wheelVelocity.h>
+#include <hektar/IRarray.h>
 #include <hektar/armPos.h>
 #include <rosserial_arduino/Adc.h>
 #include <std_msgs/Float64.h>
@@ -72,7 +72,7 @@ float get_servo_pulse(int angle){
 }
 
 // Theoretically, 1ms pulse moves it to 0 degree state, 2ms pulse moves it to 180 degree state,
-// and everything in between is linear
+// and everything in between is linear.
 void claw_callback(const hektar::Claw &claw_cmd_msg) {
   int leftPulse = 10 * get_servo_pulse(claw_cmd_msg.posL);
   int rightPulse = 10 * get_servo_pulse(claw_cmd_msg.posR)
