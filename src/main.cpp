@@ -18,8 +18,8 @@
 #include <std_msgs/Bool.h>
 
 // Define claw servo output pins
-#define CLAW_L PA6
-#define CLAW_R PA0
+#define CLAW_L PA_6
+#define CLAW_R PA_0
 
 // Define PWM output pins
 #define BASE_PWM PB_9
