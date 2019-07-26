@@ -109,10 +109,10 @@ void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
   
   if (arm_cmd_msg.baseVel > 0) {
     digitalWrite(toggleBase, 1);
-    pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
+    pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.baseVel), 0);
   } else {
     digitalWrite(toggleBase, 0);
-    pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
+    pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.baseVel), 0);
   }
 
 }
