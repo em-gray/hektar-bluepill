@@ -9,14 +9,14 @@
 #include <Servo.h>
 
 #include <ros.h>
-#include <wheelVelocity.h>
-#include <IRarray.h>
-#include <armPos.h>
+#include <hektar/Claw.h>
+#include <hektar/armCtrl.h>
+#include <hektar/wheelVelocity.h>
+#include <hektar/IRarray.h>
+#include <hektar/armPos.h>
 #include <rosserial_arduino/Adc.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
-#include <armCtrl.h>
-#include <Claw.h>
 
 // Define claw servo output pins
 #define CLAW_L PA_6
