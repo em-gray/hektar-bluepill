@@ -9,14 +9,14 @@
 #include <Servo.h>
 
 #include <ros.h>
-#include <hektar/Claw.h>
-#include <hektar/armCtrl.h>
-#include <hektar/wheelVelocity.h>
-#include <hektar/IRarray.h>
-#include <hektar/armPos.h>
+#include <wheelVelocity.h>
+#include <IRarray.h>
+#include <armPos.h>
 #include <rosserial_arduino/Adc.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
+#include <armCtrl.h>
+#include <Claw.h>
 
 // Define claw servo output pins
 #define CLAW_L PA_6
@@ -76,7 +76,7 @@ float get_servo_pulse(int angle){
 // and everything in between is linear.
 void claw_callback(const hektar::Claw &claw_cmd_msg) {
   int leftPulse = 50 - get_servo_pulse(claw_cmd_msg.posL);
-  int rightPulse = get_servo_pulse(claw_cmd_msg.posR)
+  int rightPulse = get_servo_pulse(claw_cmd_msg.posR);
   pwm_start(CLAW_L, 10000, 200, leftPulse, 0);
   pwm_start(CLAW_R, 10000, 200, rightPulse, 0);
 }
@@ -92,10 +92,10 @@ void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
   }
   
   if (arm_cmd_msg.elbowVel > 0) {
-    digitalWrite(toggleELbow, 1);
+    digitalWrite(toggleElbow, 1);
     pwm_start(ELBOW_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
   } else {
-    digitalWrite(toggleELbow, 0);
+    digitalWrite(toggleElbow, 0);
     pwm_start(ELBOW_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
   }
 
@@ -109,10 +109,10 @@ void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
   
   if (arm_cmd_msg.baseVel > 0) {
     digitalWrite(toggleBase, 1);
-    pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
+    pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.baseVel), 0);
   } else {
     digitalWrite(toggleBase, 0);
-    pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
+    pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.baseVel), 0);
   }
 
 }
@@ -159,6 +159,7 @@ void setup() {
   nh.advertise(armpub);
   nh.advertise(irpub);
   nh.subscribe(armSub);
+  nh.subscribe(clawSub);
   nh.subscribe(wheelSub);
 
   // //setup of pins 
@@ -167,6 +168,7 @@ void setup() {
 
   pinMode(SHOULDER_PWM, OUTPUT); 
   pinMode(ELBOW_PWM, OUTPUT); 
+  pinMode(BASE_PWM, OUTPUT);
 
   pinMode(IR0, INPUT);
   pinMode(IR1, INPUT);
