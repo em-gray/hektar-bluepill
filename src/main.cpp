@@ -9,11 +9,12 @@
 #include <Servo.h>
 
 #include <ros.h>
-#include <hektar/Claw.h>
-#include <hektar/armCtrl.h>
-#include <hektar/wheelVelocity.h>
-#include <hektar/IRarray.h>
-#include <hektar/armPos.h>
+//#include <Claw.h>
+#include <armCtrl.h>
+#include <wheelVelocity.h>
+#include <Claw.h>
+#include <IRarray.h>
+#include <armPos.h>
 #include <rosserial_arduino/Adc.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
@@ -30,14 +31,12 @@
 #define wheelL_PWM PB_6
 
 // Define toggle pins for PWM output
-#define toggleBase PA12
 #define toggleShoulder PA11
 #define toggleElbow PA15
 #define toggleWheelR PB4
 #define toggleWheelL PB5
 
 // Define arm potentiometer input pins
-#define BASE_POT PB1
 #define SHOULDER_POT PB0
 #define ELBOW_POT PA7
 
@@ -99,21 +98,9 @@ void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
     pwm_start(ELBOW_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
   }
 
-  if (arm_cmd_msg.shoulderVel > 0) {
-      digitalWrite(toggleShoulder, 1);
-      pwm_start(SHOULDER_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.shoulderVel), 0);
-  } else {
-      digitalWrite(toggleShoulder, 0);
-      pwm_start(SHOULDER_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.shoulderVel), 0);
-  }
+  int basePulse = get_servo_pulse(arm_cmd_msg.baseVel);
+  pwm_start(BASE_PWM, 10000, 200, basePulse, 0);
   
-  if (arm_cmd_msg.baseVel > 0) {
-    digitalWrite(toggleBase, 1);
-    pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.baseVel), 0);
-  } else {
-    digitalWrite(toggleBase, 0);
-    pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.baseVel), 0);
-  }
 
 }
 
@@ -150,7 +137,7 @@ ros::Publisher irpub("ir_array", &ir_msg);
 
 ros::Subscriber<hektar::armCtrl> armSub("arm_commands", arm_callback);
 ros::Subscriber<hektar::wheelVelocity> wheelSub("wheel_output", wheelVel_callback);
-ros::Subscriber<hektar::Claw> clawSub("grabber", claw_callback);
+//ros::Subscriber<hektar::Claw> clawSub("grabber", claw_callback);
 
 
 void setup() {
@@ -159,7 +146,7 @@ void setup() {
   nh.advertise(armpub);
   nh.advertise(irpub);
   nh.subscribe(armSub);
-  nh.subscribe(clawSub);
+  //nh.subscribe(clawSub);
   nh.subscribe(wheelSub);
 
   // //setup of pins 
@@ -175,13 +162,13 @@ void setup() {
   pinMode(IR2, INPUT);
   pinMode(IR3, INPUT);
   pinMode(IR4, INPUT);
-  pinMode(BASE_POT, INPUT);
+
   pinMode(ELBOW_POT, INPUT);
   pinMode(SHOULDER_POT, INPUT);
 
   pinMode(toggleWheelL, OUTPUT);
   pinMode(toggleWheelR, OUTPUT);
-  pinMode(toggleBase, OUTPUT);
+
   pinMode(toggleShoulder, OUTPUT);
   pinMode(toggleElbow, OUTPUT);
 
@@ -193,8 +180,8 @@ void setup() {
   pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, 0, 1);
 
   // Values courtesy of Mo
-  pwm_start(CLAW_L, 10000, 200, 0, 1);
-  pwm_start(CLAW_R, 10000, 200, 0, 1);
+  //pwm_start(CLAW_L, 10000, 200, 0, 1);
+  //pwm_start(CLAW_R, 10000, 200, 0, 1);
 
 }
 
@@ -210,7 +197,7 @@ void loop() {
 
   // ARM Publication: 
   //reading data to publish
-  armpos_msg.basePos = analogRead(BASE_POT);
+  armpos_msg.basePos = 0;
   armpos_msg.shoulderPos = analogRead(SHOULDER_POT);
   armpos_msg.elbowPos = analogRead(ELBOW_POT);
 
