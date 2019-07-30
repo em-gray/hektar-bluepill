@@ -137,7 +137,7 @@ ros::Publisher irpub("ir_array", &ir_msg);
 
 ros::Subscriber<hektar::armCtrl> armSub("arm_commands", arm_callback);
 ros::Subscriber<hektar::wheelVelocity> wheelSub("wheel_output", wheelVel_callback);
-//ros::Subscriber<hektar::Claw> clawSub("grabber", claw_callback);
+ros::Subscriber<hektar::Claw> clawSub("grabber", claw_callback);
 
 
 void setup() {
@@ -146,7 +146,7 @@ void setup() {
   nh.advertise(armpub);
   nh.advertise(irpub);
   nh.subscribe(armSub);
-  //nh.subscribe(clawSub);
+  nh.subscribe(clawSub);
   nh.subscribe(wheelSub);
 
   // //setup of pins 
@@ -180,8 +180,8 @@ void setup() {
   pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, 0, 1);
 
   // Values courtesy of Mo
-  //pwm_start(CLAW_L, 10000, 200, 0, 1);
-  //pwm_start(CLAW_R, 10000, 200, 0, 1);
+  pwm_start(CLAW_L, 10000, 200, 0, 1);
+  pwm_start(CLAW_R, 10000, 200, 0, 1);
 
 }
 
@@ -192,8 +192,6 @@ void loop() {
   ir_msg.ir_2 = averageAnalog(PA3);
   ir_msg.ir_3 = averageAnalog(PA4);
   ir_msg.ir_4 = averageAnalog(PA5);
-
-  //armpub.publish(&armpos_msg);
 
   // ARM Publication: 
   //reading data to publish
