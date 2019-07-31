@@ -7,7 +7,6 @@
 #include <Servo.h>
 #include <Encoder.h>
 #include <ros.h>
-//#include <Claw.h>
 #include <hektar/armCtrl.h>
 #include <hektar/wheelVelocity.h>
 #include <hektar/Claw.h>
@@ -45,7 +44,7 @@
 #define IR3 PA_4
 #define IR4 PA_5
 
-#define PWM_MAX_DUTY 500
+#define PWM_MAX_DUTY 2000 //500
 
 int basePulse = 22;
 std_msgs::Float64 debug;
@@ -119,7 +118,7 @@ void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
 
   float basePulse = get_big_servo_pulse(arm_cmd_msg.baseVel);
   debug.data = basePulse;
-  pwm_start(BASE_PWM, 100000, 2000, 10*basePulse, 0);
+  pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, 10*basePulse, 0);
   
 
 }
@@ -218,7 +217,7 @@ void setup() {
 
   pwm_start(SHOULDER_PWM, 100000, PWM_MAX_DUTY, 0, 1);
   pwm_start(ELBOW_PWM, 100000, PWM_MAX_DUTY, 0, 1);
-  pwm_start(BASE_PWM, 100000, 2000, 225, 1);
+  pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, 225, 1);
 
   // // Values courtesy of Mo
   pwm_start(CLAW_L, 10000, 200, 0, 1);
