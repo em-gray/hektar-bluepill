@@ -47,12 +47,13 @@
 
 #define PWM_MAX_DUTY 500
 
-int basePulse = 22;
-std_msgs::Float64 debug;
 #define ENCODER_L_1 PB_12
 #define ENCODER_L_2 PB_13
 #define ENCODER_R_1 PB_14
 #define ENCODER_R_2 PB_3
+
+int basePulse = 22;
+std_msgs::Float64 debug;
 
 int averageAnalog(int pin){
   int v=0;
@@ -87,7 +88,6 @@ float get_big_servo_pulse(int angle){
      return 5.0;
    }
    return val;
-
 }
 
 /*  Theoretically, 1ms pulse moves it to 0 degree state, 2ms pulse moves it to 180 degree state,
@@ -100,7 +100,6 @@ void claw_callback(const hektar::Claw &claw_cmd_msg) {
 }
 
 void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
-
   if (arm_cmd_msg.shoulderVel > 0) {
       digitalWrite(toggleShoulder, 1);
       pwm_start(SHOULDER_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.shoulderVel), 0);
@@ -118,16 +117,11 @@ void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
   }
 
   float basePulse = get_big_servo_pulse(arm_cmd_msg.baseVel);
-  debug.data = basePulse;
+  //debug.data = basePulse;
   pwm_start(BASE_PWM, 100000, 2000, 10*basePulse, 0);
-  
-
 }
 
 void wheelVel_callback(const hektar::wheelVelocity  &wheel_cmd_msg) {
-
-
-
   if (wheel_cmd_msg.wheelL > 0) {
       digitalWrite(toggleWheelL, 1);
       pwm_start(wheelL_PWM, 100000, PWM_MAX_DUTY, linearize(wheel_cmd_msg.wheelL), 0);
@@ -144,6 +138,7 @@ void wheelVel_callback(const hektar::wheelVelocity  &wheel_cmd_msg) {
       pwm_start(wheelR_PWM, 100000, PWM_MAX_DUTY, linearize(wheel_cmd_msg.wheelR), 0);
   }
 
+  debug.data = wheel_cmd_msg.wheelL;
 }
 
 
