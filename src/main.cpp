@@ -1,20 +1,18 @@
 /*
  * Main
- * 
- * 
  */
 
 #include <Arduino.h>
 //#include <Wire.h>
 #include <Servo.h>
-
+#include <Encoder.h>
 #include <ros.h>
 //#include <Claw.h>
-#include <armCtrl.h>
-#include <wheelVelocity.h>
-#include <Claw.h>
-#include <IRarray.h>
-#include <armPos.h>
+#include <hektar/armCtrl.h>
+#include <hektar/wheelVelocity.h>
+#include <hektar/Claw.h>
+#include <hektar/IRarray.h>
+#include <hektar/armPos.h>
 #include <rosserial_arduino/Adc.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
@@ -51,6 +49,10 @@
 
 int basePulse = 22;
 std_msgs::Float64 debug;
+#define ENCODER_L_1 PB_12
+#define ENCODER_L_2 PB_13
+#define ENCODER_R_1 PB_14
+#define ENCODER_R_2 PB_3
 
 int averageAnalog(int pin){
   int v=0;
@@ -88,8 +90,8 @@ float get_big_servo_pulse(int angle){
 
 }
 
-// Theoretically, 1ms pulse moves it to 0 degree state, 2ms pulse moves it to 180 degree state,
-// and everything in between is linear.
+/*  Theoretically, 1ms pulse moves it to 0 degree state, 2ms pulse moves it to 180 degree state,
+ and everything in between is linear. */
 void claw_callback(const hektar::Claw &claw_cmd_msg) {
   int leftPulse = 50.0 - get_servo_pulse(claw_cmd_msg.posL);
   int rightPulse = get_servo_pulse(claw_cmd_msg.posR);
@@ -122,8 +124,6 @@ void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
 
 }
 
-hektar::IRarray ir_msg; 
-
 void wheelVel_callback(const hektar::wheelVelocity  &wheel_cmd_msg) {
 
 
@@ -146,9 +146,10 @@ void wheelVel_callback(const hektar::wheelVelocity  &wheel_cmd_msg) {
 
 }
 
+
+hektar::IRarray ir_msg; 
 ros::NodeHandle nh;
 hektar::armPos armpos_msg;
-
 
 ros::Publisher armpub("arm_positions", &armpos_msg);
 ros::Publisher irpub("ir_array", &ir_msg);
@@ -158,6 +159,16 @@ ros::Subscriber<hektar::armCtrl> armSub("arm_commands", arm_callback);
 ros::Subscriber<hektar::wheelVelocity> wheelSub("wheel_output", wheelVel_callback);
 ros::Subscriber<hektar::Claw> clawSub("grabber", claw_callback);
 
+Encoder encoderL(ENCODER_L_1, ENCODER_L_2);
+Encoder encoderR(ENCODER_R_1, ENCODER_R_2);
+
+void updateEncoderL() {
+  encoderL.updateEncoder();
+}
+
+void updateEncoderR() {
+  encoderR.updateEncoder();
+}
 
 void setup() {
   //ros stuff
@@ -170,6 +181,16 @@ void setup() {
   nh.subscribe(wheelSub);
 
   // //setup of pins 
+  pinMode(ENCODER_L_1, INPUT_PULLUP);
+  pinMode(ENCODER_L_2, INPUT_PULLUP);
+  pinMode(ENCODER_R_1, INPUT_PULLUP);
+  pinMode(ENCODER_R_2, INPUT_PULLUP);
+
+  attachInterrupt(digitalPinToInterrupt(ENCODER_L_1), updateEncoderL, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_L_2), updateEncoderL, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_R_1), updateEncoderR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_R_2), updateEncoderR, CHANGE);
+
   pinMode(CLAW_L, OUTPUT);
   pinMode(CLAW_R, OUTPUT);
 
@@ -228,55 +249,3 @@ void loop() {
 
   delay(20);
 }
-
-/********** ADC STUFF **********/
-  //rosserial_arduino::Adc adc_msg;
-  //ros::Publisher p("adc", &adc_msg);
-
-  // adc_msg.adc0 = averageAnalog(PA0);
-  // adc_msg.adc1 = averageAnalog(PA1);
-  // adc_msg.adc2 = averageAnalog(PA2);
-  // adc_msg.adc3 = averageAnalog(PA3);
-  // adc_msg.adc4 = averageAnalog(PA4);
-  // p.publish(&adc_msg);
-
-
-/********** SIMPLE BLINK **********/
-  // void setup()
-  // {
-  //   pinMode(PC13, OUTPUT);
-  //   digitalWrite(PC13, HIGH);
-  // }
-
-  // void loop()
-  // {
-  //   digitalWrite(PC13, HIGH);
-  //   delay(1000);
-  //   digitalWrite(PC13, LOW);
-  //   delay(1000);
-  // }
-
-
-
-
-/********** SERVO SWEEP **********/
-  // Servo myservo;  // create servo object to control a servo
-  // // twelve servo objects can be created on most boards
-
-  // int pos = 0;    // variable to store the servo position
-
-  // void setup() {
-  //   myservo.attach(PB7);  
-  //   pinMode(PC13, OUTPUT);
-  //   digitalWrite(PC13, HIGH);
-  // }
-
-  // void loop() {
-  //   myservo.write(0);
-  //   digitalWrite(PC13, HIGH);
-  //   delay(2000);
-
-  //   myservo.write(180);
-  //   digitalWrite(PC13, LOW);
-  //   delay(2000);
-  // }
