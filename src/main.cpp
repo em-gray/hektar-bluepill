@@ -49,6 +49,9 @@
 
 #define PWM_MAX_DUTY 500
 
+int basePulse = 22;
+std_msgs::Float64 debug;
+
 int averageAnalog(int pin){
   int v=0;
   for(int i=0; i<4; i++) v+= analogRead(pin);
@@ -66,15 +69,29 @@ int linearize(int pwmPercent) {
     return -pwmPercent*PWM_MAX_DUTY/127;
   }
 }
-
+// Params:
+// 0 < angle < 180
 float get_servo_pulse(int angle){
-  return ((49 * angle)/180.0 + 1);
+  return ((49.0 * angle)/180.0 + 1.0);
+}
+
+// Params:
+// -90 < angle < 90
+float get_big_servo_pulse(int angle){
+   float val = ((22.0 * angle)/180.0 + 16.0);
+   if (val > 27.0){
+     return 27.0;
+   } else if (val < 5){
+     return 5.0;
+   }
+   return val;
+
 }
 
 // Theoretically, 1ms pulse moves it to 0 degree state, 2ms pulse moves it to 180 degree state,
 // and everything in between is linear.
 void claw_callback(const hektar::Claw &claw_cmd_msg) {
-  int leftPulse = 50 - get_servo_pulse(claw_cmd_msg.posL);
+  int leftPulse = 50.0 - get_servo_pulse(claw_cmd_msg.posL);
   int rightPulse = get_servo_pulse(claw_cmd_msg.posR);
   pwm_start(CLAW_L, 10000, 200, leftPulse, 0);
   pwm_start(CLAW_R, 10000, 200, rightPulse, 0);
@@ -98,8 +115,9 @@ void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
     pwm_start(ELBOW_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
   }
 
-  int basePulse = get_servo_pulse(arm_cmd_msg.baseVel);
-  pwm_start(BASE_PWM, 10000, 200, basePulse, 0);
+  float basePulse = get_big_servo_pulse(arm_cmd_msg.baseVel);
+  debug.data = basePulse;
+  pwm_start(BASE_PWM, 100000, 2000, 10*basePulse, 0);
   
 
 }
@@ -134,6 +152,7 @@ hektar::armPos armpos_msg;
 
 ros::Publisher armpub("arm_positions", &armpos_msg);
 ros::Publisher irpub("ir_array", &ir_msg);
+ros::Publisher debugger("debug", &debug);
 
 ros::Subscriber<hektar::armCtrl> armSub("arm_commands", arm_callback);
 ros::Subscriber<hektar::wheelVelocity> wheelSub("wheel_output", wheelVel_callback);
@@ -145,6 +164,7 @@ void setup() {
   nh.initNode();
   nh.advertise(armpub);
   nh.advertise(irpub);
+  nh.advertise(debugger);
   nh.subscribe(armSub);
   nh.subscribe(clawSub);
   nh.subscribe(wheelSub);
@@ -177,9 +197,9 @@ void setup() {
 
   pwm_start(SHOULDER_PWM, 100000, PWM_MAX_DUTY, 0, 1);
   pwm_start(ELBOW_PWM, 100000, PWM_MAX_DUTY, 0, 1);
-  pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, 0, 1);
+  pwm_start(BASE_PWM, 100000, 2000, 225, 1);
 
-  // Values courtesy of Mo
+  // // Values courtesy of Mo
   pwm_start(CLAW_L, 10000, 200, 0, 1);
   pwm_start(CLAW_R, 10000, 200, 0, 1);
 
@@ -202,6 +222,7 @@ void loop() {
   //ros stuff
   irpub.publish(&ir_msg);
   armpub.publish(&armpos_msg);
+  debugger.publish(&debug);
 
   nh.spinOnce();
 
