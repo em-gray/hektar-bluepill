@@ -29,8 +29,8 @@ Encoder::Encoder(int pin1, int pin2) {
     this->lastencoderValue=0;
 }
 
-int Encoder::getPosition() {
-    return this->lastEncoded;
+long Encoder::getPosition() {
+    return this->encoderValue;
 }
 
 int Encoder::getPin1() {
@@ -71,11 +71,4 @@ void Encoder::updateEncoder() {
   this->lastEncoded = encoded;
 }
 
-
-int tur() {
-    Encoder encoder(1,2);
-    Encoder::updateEncoder(encoder);
-    //attachInterrupt(2, Encoder::updateEncoder(encoder), CHANGE);
-    return 0;
-}
 

@@ -6,13 +6,13 @@ class Encoder
     private:
         int pin1, pin2;
 
-        volatile int lastEncoded;
+        volatile long lastEncoded;
         volatile long encoderValue;
         long lastencoderValue;
         
     public:
         Encoder(int pin1, int pin2);
-        int getPosition();
+        long getPosition();
         int getPin1();
         int getPin2();
 
