@@ -7,12 +7,12 @@
 #include <Servo.h>
 #include <Encoder.h>
 #include <ros.h>
-//#include <Claw.h>
 #include <hektar/armCtrl.h>
 #include <hektar/wheelVelocity.h>
 #include <hektar/Claw.h>
 #include <hektar/IRarray.h>
 #include <hektar/armPos.h>
+#include <hektar/encoderPos.h>
 #include <rosserial_arduino/Adc.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
@@ -45,7 +45,7 @@
 #define IR3 PA_4
 #define IR4 PA_5
 
-#define PWM_MAX_DUTY 500
+#define PWM_MAX_DUTY 2000 //500
 
 #define ENCODER_L_1 PB_12
 #define ENCODER_L_2 PB_13
@@ -117,8 +117,10 @@ void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
   }
 
   float basePulse = get_big_servo_pulse(arm_cmd_msg.baseVel);
-  //debug.data = basePulse;
-  pwm_start(BASE_PWM, 100000, 2000, 10*basePulse, 0);
+  debug.data = basePulse;
+  pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, 10*basePulse, 0);
+  
+
 }
 
 void wheelVel_callback(const hektar::wheelVelocity  &wheel_cmd_msg) {
@@ -145,10 +147,12 @@ void wheelVel_callback(const hektar::wheelVelocity  &wheel_cmd_msg) {
 hektar::IRarray ir_msg; 
 ros::NodeHandle nh;
 hektar::armPos armpos_msg;
+hektar::encoderPos encoder_msg;
 
 ros::Publisher armpub("arm_positions", &armpos_msg);
 ros::Publisher irpub("ir_array", &ir_msg);
 ros::Publisher debugger("debug", &debug);
+ros::Publisher encoder("encoder", &encoder_msg);
 
 ros::Subscriber<hektar::armCtrl> armSub("arm_commands", arm_callback);
 ros::Subscriber<hektar::wheelVelocity> wheelSub("wheel_output", wheelVel_callback);
@@ -213,7 +217,7 @@ void setup() {
 
   pwm_start(SHOULDER_PWM, 100000, PWM_MAX_DUTY, 0, 1);
   pwm_start(ELBOW_PWM, 100000, PWM_MAX_DUTY, 0, 1);
-  pwm_start(BASE_PWM, 100000, 2000, 225, 1);
+  pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, 225, 1);
 
   // // Values courtesy of Mo
   pwm_start(CLAW_L, 10000, 200, 0, 1);
@@ -235,10 +239,15 @@ void loop() {
   armpos_msg.shoulderPos = analogRead(SHOULDER_POT);
   armpos_msg.elbowPos = analogRead(ELBOW_POT);
 
+  encoder_msg.wheelL = encoderL.getPosition();
+  encoder_msg.wheelR = encoderR.getPosition();
+
+
   //ros stuff
   irpub.publish(&ir_msg);
   armpub.publish(&armpos_msg);
   debugger.publish(&debug);
+  encoder.publish(&encoder_msg);
 
   nh.spinOnce();
 

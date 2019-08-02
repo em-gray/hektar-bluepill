@@ -29,8 +29,8 @@ Encoder::Encoder(int pin1, int pin2) {
     this->lastencoderValue=0;
 }
 
-int Encoder::getPosition() {
-    return this->lastEncoded;
+long Encoder::getPosition() {
+    return this->encoderValue;
 }
 
 int Encoder::getPin1() {
