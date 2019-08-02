@@ -20,39 +20,49 @@
 #define CLAW_L PA_6
 #define CLAW_R PA_0
 
-// Define PWM output pins
+// PWM output pins
 #define BASE_PWM PB_9
 #define SHOULDER_PWM PB_8
 #define ELBOW_PWM PA_8
 #define wheelR_PWM PB_7
 #define wheelL_PWM PB_6
 
-// Define toggle pins for PWM output
+// Max duty cycle for PWM outputs
+#define PWM_MAX_DUTY 2000 //500
+
+// Toggle pins for PWM output
 #define toggleShoulder PA11
 #define toggleElbow PA15
 #define toggleWheelR PB4
 #define toggleWheelL PB5
 
-// Define arm potentiometer input pins
+// Arm potentiometer input pins
 #define SHOULDER_POT PB0
 #define ELBOW_POT PA7
 
-// Define IR array input pins
+// IR array input pins
 #define IR0 PA_1
 #define IR1 PA_2
 #define IR2 PA_3
 #define IR3 PA_4
 #define IR4 PA_5
 
-#define PWM_MAX_DUTY 2000 //500
-
-int basePulse = 22;
-std_msgs::Float64 debug;
+// Encoder input pins
 #define ENCODER_L_1 PB_12
 #define ENCODER_L_2 PB_13
 #define ENCODER_R_1 PB_14
 #define ENCODER_R_2 PB_3
 
+// Define
+#define LEFT_PIN PB11
+
+int basePulse = 22;
+std_msgs::Float64 debug;
+
+/* Function: averageAnalog
+*  Params: analog input pin number
+*  Returns: analog value representing rolling average
+*/
 int averageAnalog(int pin){
   int v=0;
   for(int i=0; i<4; i++) v+= analogRead(pin);
@@ -60,9 +70,9 @@ int averageAnalog(int pin){
 }
 
 /* Function: lineralize
- * Params: int8 from -127 to 127
- * Returns: PWM duty cycle length, up to PWM_MAX_DUTY
- */
+*  Params: int8 from -127 to 127
+*  Returns: PWM duty cycle length, up to PWM_MAX_DUTY
+*/
 int linearize(int pwmPercent) { 
   if (pwmPercent > 0) {
     return pwmPercent*PWM_MAX_DUTY/127;
@@ -70,15 +80,20 @@ int linearize(int pwmPercent) {
     return -pwmPercent*PWM_MAX_DUTY/127;
   }
 }
-// Params:
-// 0 < angle < 180
-float get_servo_pulse(int angle){
+
+/* Function: getClawServoPulse
+*  Params: angle, int from 0-180
+*  Returns: pulse length that moves claw servo to desired location
+*/
+float getClawServoPulse(int angle){
   return ((49.0 * angle)/180.0 + 1.0);
 }
 
-// Params:
-// -90 < angle < 90
-float get_big_servo_pulse(int angle){
+/* Function: getBaseServoPulse
+*  Params: angle, int from -90 to 90
+*  Returns: pulse length that moves base servo to desired location
+*/
+float getBaseServoPulse(int angle){
    float val = ((22.0 * angle)/180.0 + 16.0);
    if (val > 27.0){
      return 27.0;
@@ -92,8 +107,8 @@ float get_big_servo_pulse(int angle){
 /*  Theoretically, 1ms pulse moves it to 0 degree state, 2ms pulse moves it to 180 degree state,
  and everything in between is linear. */
 void claw_callback(const hektar::Claw &claw_cmd_msg) {
-  int leftPulse = 50.0 - get_servo_pulse(claw_cmd_msg.posL);
-  int rightPulse = get_servo_pulse(claw_cmd_msg.posR);
+  int leftPulse = 50.0 - getClawServoPulse(claw_cmd_msg.posL);
+  int rightPulse = getClawServoPulse(claw_cmd_msg.posR);
   pwm_start(CLAW_L, 10000, 200, leftPulse, 0);
   pwm_start(CLAW_R, 10000, 200, rightPulse, 0);
 }
@@ -116,7 +131,8 @@ void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
     pwm_start(ELBOW_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.elbowVel), 0);
   }
 
-  float basePulse = get_big_servo_pulse(arm_cmd_msg.baseVel);
+  float basePulse = getBaseServoPulse
+  (arm_cmd_msg.baseVel);
   debug.data = basePulse;
   pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, 10*basePulse, 0);
   
@@ -149,10 +165,12 @@ void wheelVel_callback(const hektar::wheelVelocity  &wheel_cmd_msg) {
 hektar::IRarray ir_msg; 
 ros::NodeHandle nh;
 hektar::armPos armpos_msg;
+std_msgs::Bool left;
 
 ros::Publisher armpub("arm_positions", &armpos_msg);
 ros::Publisher irpub("ir_array", &ir_msg);
 ros::Publisher debugger("debug", &debug);
+ros::Publisher leftpub("left", &left);
 
 ros::Subscriber<hektar::armCtrl> armSub("arm_commands", arm_callback);
 ros::Subscriber<hektar::wheelVelocity> wheelSub("wheel_output", wheelVel_callback);
@@ -169,11 +187,17 @@ void updateEncoderR() {
   encoderR.updateEncoder();
 }
 
+void leftBool() {
+  left.data = 
+  leftpub.publish();
+}
+
 void setup() {
   //ros stuff
   nh.initNode();
   nh.advertise(armpub);
   nh.advertise(irpub);
+  nh.advertise(leftpub);
   nh.advertise(debugger);
   nh.subscribe(armSub);
   nh.subscribe(clawSub);
@@ -240,6 +264,7 @@ void loop() {
   armpos_msg.elbowPos = analogRead(ELBOW_POT);
 
   //ros stuff
+
   irpub.publish(&ir_msg);
   armpub.publish(&armpos_msg);
   debugger.publish(&debug);
