@@ -55,7 +55,8 @@
 #define ENCODER_R_2 PB_3
 
 // Define
-#define LEFT_PIN PB11
+#define MODE_SWITCH PB11
+#define DEBOUNCE_TIME 200 // millis 
 
 int basePulse = 22;
 std_msgs::Float64 debug;
@@ -186,9 +187,15 @@ void updateEncoderR() {
   encoderR.updateEncoder();
 }
 
-void leftBool() {
-  // left.data;
-  // leftpub.publish();
+void mode_switch_callback() {
+  static long last_time = 0;
+
+  if (millis() - last_time > DEBOUNCE_TIME) {
+    left.data = digitalRead(MODE_SWITCH) == true;
+    leftpub.publish(&left);
+    last_time = millis();
+  }
+
 }
 
 void setup() {
@@ -234,6 +241,9 @@ void setup() {
 
   pinMode(toggleShoulder, OUTPUT);
   pinMode(toggleElbow, OUTPUT);
+
+  pinMode(MODE_SWITCH, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(MODE_SWITCH), mode_switch_callback, CHANGE);
 
   pwm_start(wheelL_PWM, 100000, PWM_MAX_DUTY, 0, 1);
   pwm_start(wheelR_PWM, 100000, PWM_MAX_DUTY, 0, 1);

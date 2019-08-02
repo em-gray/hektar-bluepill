@@ -72,10 +72,3 @@ void Encoder::updateEncoder() {
 }
 
 
-int tur() {
-    Encoder encoder(1,2);
-    Encoder::updateEncoder(encoder);
-    //attachInterrupt(2, Encoder::updateEncoder(encoder), CHANGE);
-    return 0;
-}
-
