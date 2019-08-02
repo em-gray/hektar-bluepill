@@ -53,8 +53,8 @@
 #define ENCODER_R_1 PB_14
 #define ENCODER_R_2 PB_3
 
-// Define
-#define LEFT_PIN PB11
+#define MODE_SWITCH PB_11
+#define DEBOUNCE_TIME 200 // millis
 
 int basePulse = 22;
 std_msgs::Float64 debug;
@@ -187,9 +187,15 @@ void updateEncoderR() {
   encoderR.updateEncoder();
 }
 
-void leftBool() {
-  left.data = 
-  leftpub.publish();
+void mode_switch_callback() {
+  static long last_time = 0;
+
+  if (millis() - last_time > DEBOUNCE_TIME) {
+    left.data = digitalRead(MODE_SWITCH) == true;
+    leftpub.publish(&left);
+    last_time = millis();
+  }
+
 }
 
 void setup() {
@@ -197,7 +203,6 @@ void setup() {
   nh.initNode();
   nh.advertise(armpub);
   nh.advertise(irpub);
-  nh.advertise(leftpub);
   nh.advertise(debugger);
   nh.subscribe(armSub);
   nh.subscribe(clawSub);
