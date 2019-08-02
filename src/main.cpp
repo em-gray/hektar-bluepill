@@ -12,7 +12,6 @@
 #include <hektar/Claw.h>
 #include <hektar/IRarray.h>
 #include <hektar/armPos.h>
-#include <hektar/encoderPos.h>
 #include <rosserial_arduino/Adc.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
@@ -54,9 +53,8 @@
 #define ENCODER_R_1 PB_14
 #define ENCODER_R_2 PB_3
 
-// Define
-#define MODE_SWITCH PB11
-#define DEBOUNCE_TIME 200 // millis 
+#define MODE_SWITCH PB_11
+#define DEBOUNCE_TIME 200 // millis
 
 int basePulse = 22;
 std_msgs::Float64 debug;
@@ -103,6 +101,7 @@ float getBaseServoPulse(int angle){
      return 5.0;
    }
    return val;
+
 }
 
 /*  Theoretically, 1ms pulse moves it to 0 degree state, 2ms pulse moves it to 180 degree state,
@@ -115,6 +114,7 @@ void claw_callback(const hektar::Claw &claw_cmd_msg) {
 }
 
 void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
+
   if (arm_cmd_msg.shoulderVel > 0) {
       digitalWrite(toggleShoulder, 1);
       pwm_start(SHOULDER_PWM, 100000, PWM_MAX_DUTY, linearize(arm_cmd_msg.shoulderVel), 0);
@@ -140,6 +140,9 @@ void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
 }
 
 void wheelVel_callback(const hektar::wheelVelocity  &wheel_cmd_msg) {
+
+
+
   if (wheel_cmd_msg.wheelL > 0) {
       digitalWrite(toggleWheelL, 1);
       pwm_start(wheelL_PWM, 100000, PWM_MAX_DUTY, linearize(wheel_cmd_msg.wheelL), 0);
@@ -156,20 +159,17 @@ void wheelVel_callback(const hektar::wheelVelocity  &wheel_cmd_msg) {
       pwm_start(wheelR_PWM, 100000, PWM_MAX_DUTY, linearize(wheel_cmd_msg.wheelR), 0);
   }
 
-  debug.data = wheel_cmd_msg.wheelL;
 }
 
 
 hektar::IRarray ir_msg; 
 ros::NodeHandle nh;
 hektar::armPos armpos_msg;
-hektar::encoderPos encoder_msg;
 std_msgs::Bool left;
 
 ros::Publisher armpub("arm_positions", &armpos_msg);
 ros::Publisher irpub("ir_array", &ir_msg);
 ros::Publisher debugger("debug", &debug);
-ros::Publisher encoder("encoder", &encoder_msg);
 ros::Publisher leftpub("left", &left);
 
 ros::Subscriber<hektar::armCtrl> armSub("arm_commands", arm_callback);
@@ -203,7 +203,6 @@ void setup() {
   nh.initNode();
   nh.advertise(armpub);
   nh.advertise(irpub);
-  nh.advertise(leftpub);
   nh.advertise(debugger);
   nh.subscribe(armSub);
   nh.subscribe(clawSub);
@@ -242,9 +241,6 @@ void setup() {
   pinMode(toggleShoulder, OUTPUT);
   pinMode(toggleElbow, OUTPUT);
 
-  pinMode(MODE_SWITCH, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(MODE_SWITCH), mode_switch_callback, CHANGE);
-
   pwm_start(wheelL_PWM, 100000, PWM_MAX_DUTY, 0, 1);
   pwm_start(wheelR_PWM, 100000, PWM_MAX_DUTY, 0, 1);
 
@@ -272,16 +268,11 @@ void loop() {
   armpos_msg.shoulderPos = analogRead(SHOULDER_POT);
   armpos_msg.elbowPos = analogRead(ELBOW_POT);
 
-  encoder_msg.wheelL = encoderL.getPosition();
-  encoder_msg.wheelR = encoderR.getPosition();
-
-
   //ros stuff
 
   irpub.publish(&ir_msg);
   armpub.publish(&armpos_msg);
   debugger.publish(&debug);
-  encoder.publish(&encoder_msg);
 
   nh.spinOnce();
 
