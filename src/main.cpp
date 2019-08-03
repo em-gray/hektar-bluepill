@@ -54,7 +54,7 @@
 #define ENCODER_R_2 PB_3
 
 #define MODE_SWITCH PB_11
-#define DEBOUNCE_TIME 200 // millis
+#define DEBOUNCE_TIME 70 // millis
 
 int basePulse = 22;
 std_msgs::Float64 debug;
@@ -170,7 +170,7 @@ std_msgs::Bool left;
 ros::Publisher armpub("arm_positions", &armpos_msg);
 ros::Publisher irpub("ir_array", &ir_msg);
 ros::Publisher debugger("debug", &debug);
-ros::Publisher leftpub("left", &left);
+ros::Publisher leftpub("left_side", &left);
 
 ros::Subscriber<hektar::armCtrl> armSub("arm_commands", arm_callback);
 ros::Subscriber<hektar::wheelVelocity> wheelSub("wheel_output", wheelVel_callback);
@@ -188,14 +188,9 @@ void updateEncoderR() {
 }
 
 void mode_switch_callback() {
-  static long last_time = 0;
-
-  if (millis() - last_time > DEBOUNCE_TIME) {
-    left.data = digitalRead(MODE_SWITCH) == true;
-    leftpub.publish(&left);
-    last_time = millis();
-  }
-
+  delay(DEBOUNCE_TIME); // hoping to avoid some debouncing here 
+  left.data = digitalRead(MODE_SWITCH) == true;
+  leftpub.publish(&left);
 }
 
 void setup() {
@@ -207,8 +202,13 @@ void setup() {
   nh.subscribe(armSub);
   nh.subscribe(clawSub);
   nh.subscribe(wheelSub);
+  nh.advertise(leftpub);
 
   // //setup of pins 
+
+  pinMode(MODE_SWITCH, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(MODE_SWITCH), mode_switch_callback, CHANGE);
+
   pinMode(ENCODER_L_1, INPUT_PULLUP);
   pinMode(ENCODER_L_2, INPUT_PULLUP);
   pinMode(ENCODER_R_1, INPUT_PULLUP);
