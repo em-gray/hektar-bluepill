@@ -15,6 +15,7 @@
 #include <rosserial_arduino/Adc.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
+#include <hektar/encoderPos.h>
 
 // Define claw servo output pins
 #define CLAW_L PA_6
@@ -164,10 +165,12 @@ hektar::IRarray ir_msg;
 ros::NodeHandle nh;
 hektar::armPos armpos_msg;
 std_msgs::Bool left;
+hektar::encoderPos encoder_msg;
 
 ros::Publisher armpub("arm_positions", &armpos_msg);
 ros::Publisher irpub("ir_array", &ir_msg);
 ros::Publisher leftpub("left_side", &left);
+ros::Publisher encoder("encoder", &encoder_msg);
 
 ros::Subscriber<hektar::armCtrl> armSub("arm_commands", arm_callback);
 ros::Subscriber<hektar::wheelVelocity> wheelSub("wheel_output", wheelVel_callback);
@@ -264,10 +267,14 @@ void loop() {
   armpos_msg.shoulderPos = 1023 - analogRead(SHOULDER_POT);
   armpos_msg.elbowPos = analogRead(ELBOW_POT);
 
+  encoder_msg.wheelL = encoderL.getPosition();
+  encoder_msg.wheelR = encoderR.getPosition();
+
   //ros stuff
 
   irpub.publish(&ir_msg);
   armpub.publish(&armpos_msg);
+  encoder.publish(&encoder_msg);
 
   nh.spinOnce();
 
