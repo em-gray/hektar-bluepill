@@ -57,7 +57,6 @@
 #define DEBOUNCE_TIME 70 // millis
 
 int basePulse = 22;
-std_msgs::Float64 debug;
 
 /* Function: averageAnalog
 *  Params: analog input pin number
@@ -133,7 +132,6 @@ void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
 
   float basePulse = getBaseServoPulse
   (arm_cmd_msg.baseVel);
-  debug.data = basePulse;
   pwm_start(BASE_PWM, 100000, PWM_MAX_DUTY, 10*basePulse, 0);
   
 
@@ -169,7 +167,6 @@ std_msgs::Bool left;
 
 ros::Publisher armpub("arm_positions", &armpos_msg);
 ros::Publisher irpub("ir_array", &ir_msg);
-ros::Publisher debugger("debug", &debug);
 ros::Publisher leftpub("left_side", &left);
 
 ros::Subscriber<hektar::armCtrl> armSub("arm_commands", arm_callback);
@@ -198,7 +195,6 @@ void setup() {
   nh.initNode();
   nh.advertise(armpub);
   nh.advertise(irpub);
-  nh.advertise(debugger);
   nh.subscribe(armSub);
   nh.subscribe(clawSub);
   nh.subscribe(wheelSub);
@@ -265,14 +261,13 @@ void loop() {
   // ARM Publication: 
   //reading data to publish
   armpos_msg.basePos = 0;
-  armpos_msg.shoulderPos = analogRead(SHOULDER_POT);
+  armpos_msg.shoulderPos = 1023 - analogRead(SHOULDER_POT);
   armpos_msg.elbowPos = analogRead(ELBOW_POT);
 
   //ros stuff
 
   irpub.publish(&ir_msg);
   armpub.publish(&armpos_msg);
-  debugger.publish(&debug);
 
   nh.spinOnce();
 
