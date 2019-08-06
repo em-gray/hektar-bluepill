@@ -15,7 +15,7 @@
 #include <rosserial_arduino/Adc.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
-#include <hektar/encoderPos.h>
+#include <std_msgs/Int32.h>
 
 // Define claw servo output pins
 #define CLAW_L PA_6
@@ -49,10 +49,10 @@
 #define IR4 PA_5
 
 // Encoder input pins
-#define ENCODER_L_1 PB_12
-#define ENCODER_L_2 PB_13
-#define ENCODER_R_1 PB_14
-#define ENCODER_R_2 PB_3
+#define ENCODER_L_1 PB3
+#define ENCODER_L_2 PB14
+#define ENCODER_R_1 PB12
+#define ENCODER_R_2 PB13
 
 // Claw limit switches
 #define LIMIT_L PB11
@@ -62,7 +62,6 @@
 #define DEBOUNCE_TIME 70 // millis
 
 int basePulse = 22;
-
 /* Function: averageAnalog
 *  Params: analog input pin number
 *  Returns: analog value representing rolling average
@@ -167,16 +166,20 @@ hektar::IRarray ir_msg;
 ros::NodeHandle nh;
 hektar::armPos armpos_msg;
 std_msgs::Bool left;
-hektar::encoderPos encoder_msg;
+
+std_msgs::Int32 encoder_left;
+std_msgs::Int32 encoder_right;
+
 std_msgs::Bool limit_l;
 std_msgs::Bool limit_r;
 
 ros::Publisher armpub("arm_positions", &armpos_msg);
 ros::Publisher irpub("ir_array", &ir_msg);
 ros::Publisher leftpub("left_side", &left);
-ros::Publisher encoder("encoder", &encoder_msg);
 ros::Publisher limit_l_pub("limit_left", &limit_l);
 ros::Publisher limit_r_pub("limit_right", &limit_r);
+ros::Publisher encoder_left_pub("encoder_left", &encoder_left);
+ros::Publisher encoder_right_pub("encoder_right", &encoder_right);
 
 ros::Subscriber<hektar::armCtrl> armSub("arm_commands", arm_callback);
 ros::Subscriber<hektar::wheelVelocity> wheelSub("wheel_output", wheelVel_callback);
@@ -220,6 +223,8 @@ void setup() {
   nh.subscribe(clawSub);
   nh.subscribe(wheelSub);
   nh.advertise(leftpub);
+  nh.advertise(encoder_left_pub);  
+  nh.advertise(encoder_right_pub);  
 
   //setup of pins 
 
@@ -274,7 +279,6 @@ void setup() {
   // // Values courtesy of Mo
   pwm_start(CLAW_L, 10000, 200, 0, 1);
   pwm_start(CLAW_R, 10000, 200, 0, 1);
-
 }
 
 void loop() {
@@ -291,14 +295,14 @@ void loop() {
   armpos_msg.shoulderPos = 1023 - analogRead(SHOULDER_POT);
   armpos_msg.elbowPos = analogRead(ELBOW_POT);
 
-  encoder_msg.wheelL = encoderL.getPosition();
-  encoder_msg.wheelR = encoderR.getPosition();
+  encoder_left.data = encoderL.getPosition();
+  encoder_right.data = encoderR.getPosition();
 
   //ros stuff
-
   irpub.publish(&ir_msg);
   armpub.publish(&armpos_msg);
-  encoder.publish(&encoder_msg);
+  encoder_left_pub.publish(&encoder_left);
+  encoder_right_pub.publish(&encoder_right);
 
   nh.spinOnce();
 
