@@ -54,7 +54,11 @@
 #define ENCODER_R_1 PB_14
 #define ENCODER_R_2 PB_3
 
-#define MODE_SWITCH PB_11
+// Claw limit switches
+#define LIMIT_L PB11
+#define LIMIT_R PB10
+
+#define MODE_SWITCH PA12
 #define DEBOUNCE_TIME 70 // millis
 
 int basePulse = 22;
@@ -140,8 +144,6 @@ void arm_callback(const hektar::armCtrl &arm_cmd_msg) {
 
 void wheelVel_callback(const hektar::wheelVelocity  &wheel_cmd_msg) {
 
-
-
   if (wheel_cmd_msg.wheelL > 0) {
       digitalWrite(toggleWheelL, 1);
       pwm_start(wheelL_PWM, 100000, PWM_MAX_DUTY, linearize(wheel_cmd_msg.wheelL), 0);
@@ -166,11 +168,15 @@ ros::NodeHandle nh;
 hektar::armPos armpos_msg;
 std_msgs::Bool left;
 hektar::encoderPos encoder_msg;
+std_msgs::Bool limit_l;
+std_msgs::Bool limit_r;
 
 ros::Publisher armpub("arm_positions", &armpos_msg);
 ros::Publisher irpub("ir_array", &ir_msg);
 ros::Publisher leftpub("left_side", &left);
 ros::Publisher encoder("encoder", &encoder_msg);
+ros::Publisher limit_l_pub("limit_left", &limit_l);
+ros::Publisher limit_r_pub("limit_right", &limit_r);
 
 ros::Subscriber<hektar::armCtrl> armSub("arm_commands", arm_callback);
 ros::Subscriber<hektar::wheelVelocity> wheelSub("wheel_output", wheelVel_callback);
@@ -193,6 +199,18 @@ void mode_switch_callback() {
   leftpub.publish(&left);
 }
 
+void left_limit_callback(){
+  delay(DEBOUNCE_TIME);
+  limit_l.data = digitalRead(LIMIT_L) == true;
+  limit_l_pub.publish(&limit_l);
+}
+
+void right_limit_callback(){
+  delay(DEBOUNCE_TIME);
+  limit_r.data = digitalRead(LIMIT_R) == true;
+  limit_r_pub.publish(&limit_r);
+}
+
 void setup() {
   //ros stuff
   nh.initNode();
@@ -203,10 +221,16 @@ void setup() {
   nh.subscribe(wheelSub);
   nh.advertise(leftpub);
 
-  // //setup of pins 
+  //setup of pins 
 
   pinMode(MODE_SWITCH, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(MODE_SWITCH), mode_switch_callback, CHANGE);
+
+  pinMode(LIMIT_L, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(LIMIT_L), left_limit_callback, CHANGE);
+
+  pinMode(LIMIT_R, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(LIMIT_R), right_limit_callback, CHANGE);
 
   pinMode(ENCODER_L_1, INPUT_PULLUP);
   pinMode(ENCODER_L_2, INPUT_PULLUP);
