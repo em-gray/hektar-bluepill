@@ -55,7 +55,7 @@
 #define ENCODER_R_2 PB13
 
 // Claw limit switches
-#define LIMIT_L PB11
+#define LIMIT_L PB1
 #define LIMIT_R PB10
 
 #define MODE_SWITCH PA12
