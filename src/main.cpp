@@ -23,8 +23,8 @@
 
 // PWM output pins
 #define BASE_PWM PB_9
-#define SHOULDER_PWM PA_8
-#define ELBOW_PWM PB_8
+#define SHOULDER_PWM PB_8
+#define ELBOW_PWM PA_8
 #define wheelR_PWM PB_7
 #define wheelL_PWM PB_6
 
@@ -32,8 +32,8 @@
 #define PWM_MAX_DUTY 2000 //500
 
 // Toggle pins for PWM output
-#define toggleShoulder PA15
-#define toggleElbow PA11
+#define toggleShoulder PA11
+#define toggleElbow PA15
 #define toggleWheelR PB4
 #define toggleWheelL PB5
 
