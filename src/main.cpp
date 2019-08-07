@@ -58,7 +58,7 @@
 #define LIMIT_L PB1
 #define LIMIT_R PB10
 
-#define MODE_SWITCH PA12
+#define MODE_SWITCH PB11
 #define DEBOUNCE_TIME 70 // millis
 
 int basePulse = 22;
@@ -110,7 +110,7 @@ float getBaseServoPulse(int angle){
 /*  Theoretically, 1ms pulse moves it to 0 degree state, 2ms pulse moves it to 180 degree state,
  and everything in between is linear. */
 void claw_callback(const hektar::Claw &claw_cmd_msg) {
-  int leftPulse = 50.0 - getClawServoPulse(claw_cmd_msg.posL);
+  int leftPulse = 51.0 - getClawServoPulse(claw_cmd_msg.posL);
   int rightPulse = getClawServoPulse(claw_cmd_msg.posR);
   pwm_start(CLAW_L, 10000, 200, leftPulse, 0);
   pwm_start(CLAW_R, 10000, 200, rightPulse, 0);
@@ -176,8 +176,8 @@ std_msgs::Bool limit_r;
 ros::Publisher armpub("arm_positions", &armpos_msg);
 ros::Publisher irpub("ir_array", &ir_msg);
 ros::Publisher leftpub("left_side", &left);
-ros::Publisher limit_l_pub("limit_left", &limit_l);
-ros::Publisher limit_r_pub("limit_right", &limit_r);
+ros::Publisher limit_left_pub("limit_left", &limit_l);
+ros::Publisher limit_right_pub("limit_right", &limit_r);
 ros::Publisher encoder_left_pub("encoder_left", &encoder_left);
 ros::Publisher encoder_right_pub("encoder_right", &encoder_right);
 
@@ -205,13 +205,13 @@ void mode_switch_callback() {
 void left_limit_callback(){
   delay(DEBOUNCE_TIME);
   limit_l.data = digitalRead(LIMIT_L) == true;
-  limit_l_pub.publish(&limit_l);
+  limit_left_pub.publish(&limit_l);
 }
 
 void right_limit_callback(){
   delay(DEBOUNCE_TIME);
   limit_r.data = digitalRead(LIMIT_R) == true;
-  limit_r_pub.publish(&limit_r);
+  limit_right_pub.publish(&limit_r);
 }
 
 void setup() {
@@ -225,6 +225,8 @@ void setup() {
   nh.advertise(leftpub);
   nh.advertise(encoder_left_pub);  
   nh.advertise(encoder_right_pub);  
+  nh.advertise(limit_left_pub);
+  nh.advertise(limit_right_pub);
 
   //setup of pins 
 
