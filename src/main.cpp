@@ -38,8 +38,8 @@
 #define toggleWheelL PB5
 
 // Arm potentiometer input pins
-#define SHOULDER_POT PB0
-#define ELBOW_POT PA7
+#define SHOULDER_POT PA7
+#define ELBOW_POT PB0
 
 // IR array input pins
 #define IR0 PA_1
